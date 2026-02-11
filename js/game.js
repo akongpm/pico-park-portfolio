@@ -33,20 +33,21 @@ const speed = 2.6;
 const keys = new Set();
 
 let hasKey = false;
+let hasPermanentKey = false;
 let currentRoom = "intro";
 let activeSection = null;
 let overlayOpen = true;
 let soundOn = false;
 
 const player = {
-  x: 120,
+  x: 180,
   y: 260,
   w: SIZE.player,
   h: SIZE.player,
 };
 
 const keyItem = {
-  x: 170,
+  x: 220,
   y: 260,
   size: SIZE.key,
   active: true,
@@ -55,19 +56,19 @@ const keyItem = {
 const rooms = {
   intro: {
     name: "intro",
-    door: { id: "hub", x: 640, y: 200, label: "Enter Portfolio", requiresKey: true },
-    keySpawn: { x: 180, y: 260 },
+    door: { id: "hub", x: 520, y: 200, label: "Enter Portfolio", requiresKey: true },
+    keySpawn: { x: 220, y: 260 },
     sign: null,
   },
   hub: {
     name: "hub",
     doors: [
-      { id: "resume", x: 150, y: 120, label: "Resume", requiresKey: true },
-      { id: "projects", x: 300, y: 120, label: "Projects", requiresKey: true },
-      { id: "education", x: 150, y: 280, label: "Education", requiresKey: true },
-      { id: "about", x: 300, y: 280, label: "About Me", requiresKey: true },
+      { id: "resume", x: 310, y: 140, label: "Resume", requiresKey: true },
+      { id: "projects", x: 430, y: 140, label: "Projects", requiresKey: true },
+      { id: "education", x: 310, y: 280, label: "Education", requiresKey: true },
+      { id: "about", x: 430, y: 280, label: "About Me", requiresKey: true },
     ],
-    keySpawn: { x: 110, y: 400 },
+    keySpawn: { x: 360, y: 400 },
   },
   resume: {
     name: "resume",
@@ -98,17 +99,21 @@ function setRoom(roomName) {
   overlayOpen = !introOverlay.classList.contains("hidden");
 
   if (roomName === "hub") {
-    hasKey = false;
-    keyItem.active = true;
-    keyItem.x = rooms.hub.keySpawn.x;
-    keyItem.y = rooms.hub.keySpawn.y;
+    hasKey = hasPermanentKey;
+    keyItem.active = !hasPermanentKey;
+    if (keyItem.active) {
+      keyItem.x = rooms.hub.keySpawn.x;
+      keyItem.y = rooms.hub.keySpawn.y;
+    }
   }
 
   if (roomName === "intro") {
-    hasKey = false;
-    keyItem.active = true;
-    keyItem.x = rooms.intro.keySpawn.x;
-    keyItem.y = rooms.intro.keySpawn.y;
+    hasKey = hasPermanentKey;
+    keyItem.active = !hasPermanentKey;
+    if (keyItem.active) {
+      keyItem.x = rooms.intro.keySpawn.x;
+      keyItem.y = rooms.intro.keySpawn.y;
+    }
   }
 
   if (roomName !== "intro" && roomName !== "hub") {
@@ -116,7 +121,7 @@ function setRoom(roomName) {
     keyItem.active = false;
   }
 
-  player.x = 120;
+  player.x = 180;
   player.y = 260;
   updateHud();
 }
@@ -192,9 +197,13 @@ function drawBackHint(door) {
 function drawKey() {
   if (!keyItem.active) return;
   ctx.fillStyle = COLORS.key;
+  const radius = keyItem.size / 2;
   ctx.beginPath();
-  ctx.arc(keyItem.x, keyItem.y, keyItem.size / 2, 0, Math.PI * 2);
+  ctx.arc(keyItem.x, keyItem.y, radius, 0, Math.PI * 2);
   ctx.fill();
+
+  ctx.fillRect(keyItem.x + radius - 2, keyItem.y - 3, 24, 6);
+  ctx.fillRect(keyItem.x + radius + 14, keyItem.y - 3, 4, 10);
 }
 
 function drawPlayer() {
@@ -248,6 +257,7 @@ function checkKeyPickup() {
 
   if (rectsOverlap(playerRect(), keyRect)) {
     hasKey = true;
+    hasPermanentKey = true;
     keyItem.active = false;
     updateHud();
   }
