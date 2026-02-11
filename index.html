@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pico Park Portfolio</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="game-shell" aria-label="Pico Park Portfolio Game">
+        <div class="hud">
+          <div class="hud__title">Pico Park Portfolio</div>
+          <div class="hud__hint" id="hudHint">Grab the key to open a door and view a section.</div>
+          <div class="hud__status" id="hudStatus">Key: <span class="pill" id="keyStatus">No</span></div>
+        </div>
+
+        <div class="game-frame">
+          <canvas id="gameCanvas" width="800" height="500" aria-label="Game canvas"></canvas>
+          <div class="overlay" id="introOverlay" role="dialog" aria-modal="true">
+            <div class="panel">
+              <h1>Welcome</h1>
+              <p>Move with <strong>WASD</strong> or arrow keys. Grab the key to open doors and reveal each section.</p>
+              <button id="startButton" class="btn">Start</button>
+            </div>
+          </div>
+          <div class="overlay hidden" id="contentOverlay" role="dialog" aria-modal="true">
+            <div class="panel panel--wide">
+              <div class="panel__header">
+                <h2 id="sectionTitle">Section</h2>
+                <button id="closeOverlay" class="btn btn--ghost">Back to Hub</button>
+              </div>
+              <p id="sectionSummary" class="panel__summary"></p>
+              <div id="sectionItems" class="panel__items"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <div>Tip: Hold a key to open a door instantly.</div>
+          <div>Press <strong>E</strong> near the sign to open the section panel.</div>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/content.js"></script>
+    <script src="js/game.js"></script>
+  </body>
+</html>
