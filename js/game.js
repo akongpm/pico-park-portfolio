@@ -7,6 +7,7 @@ const startButton = document.getElementById("startButton");
 const closeOverlay = document.getElementById("closeOverlay");
 const keyStatus = document.getElementById("keyStatus");
 const hudHint = document.getElementById("hudHint");
+const soundToggle = document.getElementById("soundToggle");
 
 const sectionTitle = document.getElementById("sectionTitle");
 const sectionSummary = document.getElementById("sectionSummary");
@@ -35,6 +36,7 @@ let hasKey = false;
 let currentRoom = "intro";
 let activeSection = null;
 let overlayOpen = true;
+let soundOn = false;
 
 const player = {
   x: 120,
@@ -132,6 +134,10 @@ function updateHud() {
   }
 }
 
+function setHudHint(message) {
+  hudHint.textContent = message;
+}
+
 function renderTextCentered(text, x, y) {
   ctx.textAlign = "center";
   ctx.fillText(text, x, y);
@@ -151,6 +157,36 @@ function drawSign(sign) {
   ctx.fillStyle = "#fff";
   ctx.font = "14px 'Space Grotesk', sans-serif";
   renderTextCentered("Press E", sign.x + SIZE.sign.w / 2, sign.y + 20);
+}
+
+function drawTooltip(text, x, y) {
+  ctx.font = "12px 'Space Grotesk', sans-serif";
+  const padding = 8;
+  const width = ctx.measureText(text).width + padding * 2;
+  const height = 20;
+  ctx.fillStyle = "rgba(26, 26, 26, 0.85)";
+  ctx.fillRect(x - width / 2, y - height - 6, width, height);
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.fillText(text, x, y - 12);
+}
+
+function drawBackHint(door) {
+  const centerX = door.x + SIZE.door.w / 2;
+  const centerY = door.y - 18;
+  ctx.strokeStyle = "#3d342b";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX + 28, centerY);
+  ctx.lineTo(centerX - 20, centerY);
+  ctx.lineTo(centerX - 12, centerY - 6);
+  ctx.moveTo(centerX - 20, centerY);
+  ctx.lineTo(centerX - 12, centerY + 6);
+  ctx.stroke();
+  ctx.fillStyle = "#3d342b";
+  ctx.font = "12px 'Space Grotesk', sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("Back", centerX, centerY - 10);
 }
 
 function drawKey() {
@@ -221,6 +257,9 @@ function checkDoorTransitions() {
   if (currentRoom === "intro") {
     const door = rooms.intro.door;
     const doorRect = { x: door.x, y: door.y, w: SIZE.door.w, h: SIZE.door.h };
+    if (rectsOverlap(playerRect(), doorRect) && !hasKey) {
+      setHudHint("Door is locked. Grab the key to enter.");
+    }
     if (rectsOverlap(playerRect(), doorRect) && hasKey) {
       setRoom("hub");
     }
@@ -230,6 +269,9 @@ function checkDoorTransitions() {
   if (currentRoom === "hub") {
     rooms.hub.doors.forEach((door) => {
       const doorRect = { x: door.x, y: door.y, w: SIZE.door.w, h: SIZE.door.h };
+      if (rectsOverlap(playerRect(), doorRect) && !hasKey) {
+        setHudHint("Grab the key first, then walk through a door.");
+      }
       if (rectsOverlap(playerRect(), doorRect) && hasKey) {
         setRoom(door.id);
       }
@@ -268,6 +310,9 @@ function maybeOpenPanel() {
   if (currentRoom === "intro" || currentRoom === "hub") return;
   const sign = rooms[currentRoom].sign;
   const signRect = { x: sign.x, y: sign.y, w: SIZE.sign.w, h: SIZE.sign.h };
+  if (rectsOverlap(playerRect(), signRect)) {
+    setHudHint("Press E to open this section.");
+  }
   if (rectsOverlap(playerRect(), signRect) && keys.has("KeyE")) {
     openSectionPanel(currentRoom);
   }
@@ -279,13 +324,31 @@ function render() {
 
   if (currentRoom === "intro") {
     drawKey();
-    drawDoor(rooms.intro.door);
+    const door = rooms.intro.door;
+    drawDoor(door);
+    const doorRect = { x: door.x, y: door.y, w: SIZE.door.w, h: SIZE.door.h };
+    if (rectsOverlap(playerRect(), doorRect) && !hasKey) {
+      drawTooltip("Locked", door.x + SIZE.door.w / 2, door.y);
+    }
   } else if (currentRoom === "hub") {
     drawKey();
-    rooms.hub.doors.forEach(drawDoor);
+    rooms.hub.doors.forEach((door) => {
+      drawDoor(door);
+      const doorRect = { x: door.x, y: door.y, w: SIZE.door.w, h: SIZE.door.h };
+      if (rectsOverlap(playerRect(), doorRect) && !hasKey) {
+        drawTooltip("Locked", door.x + SIZE.door.w / 2, door.y);
+      }
+    });
   } else {
-    drawDoor(rooms[currentRoom].backDoor);
+    const backDoor = rooms[currentRoom].backDoor;
+    drawDoor(backDoor);
+    drawBackHint(backDoor);
     drawSign(rooms[currentRoom].sign);
+    const sign = rooms[currentRoom].sign;
+    const signRect = { x: sign.x, y: sign.y, w: SIZE.sign.w, h: SIZE.sign.h };
+    if (rectsOverlap(playerRect(), signRect)) {
+      drawTooltip("Press E", sign.x + SIZE.sign.w / 2, sign.y);
+    }
   }
 
   drawPlayer();
@@ -293,6 +356,7 @@ function render() {
 
 function loop() {
   if (!overlayOpen) {
+    updateHud();
     updatePlayer();
     checkKeyPickup();
     checkDoorTransitions();
@@ -303,8 +367,23 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
+function startGame() {
+  introOverlay.classList.add("hidden");
+  overlayOpen = false;
+  setRoom("intro");
+}
+
 window.addEventListener("keydown", (event) => {
   keys.add(event.code);
+
+  if ((event.code === "Enter" || event.code === "Space") && !introOverlay.classList.contains("hidden")) {
+    startGame();
+  }
+
+  if (event.code === "Escape" && !contentOverlay.classList.contains("hidden")) {
+    contentOverlay.classList.add("hidden");
+    overlayOpen = false;
+  }
 });
 
 window.addEventListener("keyup", (event) => {
@@ -312,15 +391,18 @@ window.addEventListener("keyup", (event) => {
 });
 
 startButton.addEventListener("click", () => {
-  introOverlay.classList.add("hidden");
-  overlayOpen = false;
-  setRoom("intro");
+  startGame();
 });
 
 closeOverlay.addEventListener("click", () => {
   contentOverlay.classList.add("hidden");
   overlayOpen = false;
 });
+soundToggle.addEventListener("click", () => {
+  soundOn = !soundOn;
+  soundToggle.textContent = soundOn ? "Sound: On" : "Sound: Off";
+});
+
 
 setRoom("intro");
 loop();

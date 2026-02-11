@@ -112,6 +112,13 @@ body {
   max-width: 460px;
   box-shadow: var(--shadow);
   border: 2px solid #e2d3c2;
+  transform: translateY(0);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.overlay.hidden .panel {
+  transform: translateY(12px);
+  opacity: 0;
 }
 
 .panel--wide {
@@ -132,6 +139,12 @@ body {
 .panel__items {
   display: grid;
   gap: 12px;
+}
+
+.panel__footer {
+  margin-top: 16px;
+  font-size: 13px;
+  color: #6d5f52;
 }
 
 .panel__item {
@@ -155,6 +168,11 @@ body {
   background: transparent;
   border: 1px solid #d6c3ad;
   color: var(--ink);
+}
+
+.btn--tiny {
+  padding: 6px 12px;
+  font-size: 12px;
 }
 
 .footer {
